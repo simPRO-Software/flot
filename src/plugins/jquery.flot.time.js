@@ -132,59 +132,16 @@ API.txt for details.
         return r.join("");
     }
 
-    // To have a consistent view of time-based data independent of which time
-    // zone the client happens to be in we need a date-like object independent
-    // of time zones.  This is done through a wrapper that only calls the UTC
-    // versions of the accessor methods.
-
-    function makeUtcWrapper(d) {
-
-        function addProxyMethod(sourceObj, sourceMethod, targetObj, targetMethod) {
-            sourceObj[sourceMethod] = function() {
-                return targetObj[targetMethod].apply(targetObj, arguments);
-            };
-        }
-
-        var utc = {
-            date: d
-        };
-
-        // support strftime, if found
-
-        if (d.strftime !== undefined) {
-            addProxyMethod(utc, "strftime", d, "strftime");
-        }
-
-        addProxyMethod(utc, "getTime", d, "getTime");
-        addProxyMethod(utc, "setTime", d, "setTime");
-
-        var props = ["Date", "Day", "FullYear", "Hours", "Milliseconds", "Minutes", "Month", "Seconds"];
-
-        for (var p = 0; p < props.length; p++) {
-            addProxyMethod(utc, "get" + props[p], d, "getUTC" + props[p]);
-            addProxyMethod(utc, "set" + props[p], d, "setUTC" + props[p]);
-        }
-
-        return utc;
-    }
-
     // select time zone strategy.  This returns a date-like object tied to the
     // desired timezone
 
     function dateGenerator(ts, opts) {
-        if (opts.timezone === "browser") {
+        if (!opts.timezone || opts.timezone === "browser") {
             return new Date(ts);
-        } else if (!opts.timezone || opts.timezone === "utc") {
-            return makeUtcWrapper(new Date(ts));
-        } else if (typeof timezoneJS !== "undefined" && typeof timezoneJS.Date !== "undefined") {
-            var d = new timezoneJS.Date();
-            // timezone-js is fickle, so be sure to set the time zone before
-            // setting the time.
-            d.setTimezone(opts.timezone);
-            d.setTime(ts);
-            return d;
+        } else if (typeof moment !== "undefined" && typeof moment.tz !== "undefined") {
+            return moment(ts).tz(opts.timezone).toDate();
         } else {
-            return makeUtcWrapper(new Date(ts));
+            return new Date(ts);
         }
     }
 
