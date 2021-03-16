@@ -139,7 +139,7 @@ API.txt for details.
         if (!opts.timezone || opts.timezone === "browser") {
             return new Date(ts);
         } else if (typeof moment !== "undefined" && typeof moment.tz !== "undefined") {
-            return moment(ts).tz(opts.timezone).toDate();
+            return moment(moment(ts).tz(opts.timezone).format("YYYY-MM-DDTHH:mm:ss")).toDate();
         } else {
             return new Date(ts);
         }
