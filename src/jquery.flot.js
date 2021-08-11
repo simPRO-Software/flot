@@ -1262,6 +1262,7 @@ Licensed under the MIT license.
             }
             if (res.y1 !== undefined) {
                 res.y = res.y1;
+                res.y = res.y1;
             }
 
             return res;
@@ -1593,14 +1594,14 @@ Licensed under the MIT license.
                     var delta;
 
                     switch (s.bars.align) {
-                    case "left":
-                        delta = 0;
-                        break;
-                    case "right":
-                        delta = -s.bars.barWidth;
-                        break;
-                    default:
-                        delta = -s.bars.barWidth / 2;
+                        case "left":
+                            delta = 0;
+                            break;
+                        case "right":
+                            delta = -s.bars.barWidth;
+                            break;
+                        default:
+                            delta = -s.bars.barWidth / 2;
                     }
 
                     if (s.bars.horizontal) {
@@ -1634,8 +1635,8 @@ Licensed under the MIT license.
             // padding messes up the positioning
             placeholder.css("padding", 0)
                 .children().filter(function() {
-                    return !$(this).hasClass("flot-overlay") && !$(this).hasClass("flot-base");
-                }).remove();
+                return !$(this).hasClass("flot-overlay") && !$(this).hasClass("flot-base");
+            }).remove();
 
             if (placeholder.css("position") === "static") {
 
@@ -2271,6 +2272,7 @@ Licensed under the MIT license.
             if (grid.show && grid.aboveData) {
                 drawGrid();
             }
+            drawSecondMarkings();
 
             surface.render();
 
@@ -2326,6 +2328,52 @@ Licensed under the MIT license.
             ctx.restore();
         }
 
+        function drawSecondMarkings() {
+            var i, axes, bw, bc;
+
+            ctx.save();
+            ctx.translate(plotOffset.left, plotOffset.top);
+
+            var markingLayer = "flot-markings";
+            surface.removeText(markingLayer);
+
+            // process markings
+            var markingsAboveGraph = [],
+                markings = options.grid.markings;
+
+            if (markings) {
+                if ($.isFunction(markings)) {
+                    axes = plot.getAxes();
+
+                    // xmin etc. is backwards compatibility, to be
+                    // removed in the future
+                    axes.xmin = axes.xaxis.min;
+                    axes.xmax = axes.xaxis.max;
+                    axes.ymin = axes.yaxis.min;
+                    axes.ymax = axes.yaxis.max;
+
+                    markings = markings(axes);
+                }
+
+                for (i = 0; i < markings.length; ++i) {
+                    var m = markings[i];
+
+                    if (m.aboveGraph) {
+                        markingsAboveGraph.push(m);
+                    }
+                }
+            }
+
+            // draw the ticks
+            axes = allAxes();
+            bw = options.grid.borderWidth;
+
+            drawMarkings(markingsAboveGraph, markingLayer);
+
+
+            ctx.restore();
+        }
+
         function drawGrid() {
             var i, axes, bw, bc;
 
@@ -2358,9 +2406,12 @@ Licensed under the MIT license.
                     var m = markings[i];
 
                     if (m.aboveGrid) {
+                        console.log('above');
                         markingsAboveGrid.push(m);
-                    } else {
+                    } else if (!m.aboveGraph) {
                         markingsUnderGrid.push(m);
+                        console.log('notAbove');
+                        console.log(m);
                     }
                 }
             }
@@ -2621,23 +2672,23 @@ Licensed under the MIT license.
 
                 if (!!m.textAlign) {
                     switch (m.textAlign.toLowerCase()) {
-                    case "right":
-                        xPos = xrange.to + plotOffset.left;
-                        break;
-                    case "center":
-                        xPos = (xrange.from + plotOffset.left + xrange.to + plotOffset.left) / 2;
-                        break;
+                        case "right":
+                            xPos = xrange.to + plotOffset.left;
+                            break;
+                        case "center":
+                            xPos = (xrange.from + plotOffset.left + xrange.to + plotOffset.left) / 2;
+                            break;
                     }
                 }
 
                 if (!!m.textBaseline) {
                     switch (m.textBaseline.toLowerCase()) {
-                    case "bottom":
-                        yPos = (yrange.from + plotOffset.top);
-                        break;
-                    case "middle":
-                        yPos = (yrange.from + plotOffset.top + yrange.to + plotOffset.top) / 2;
-                        break;
+                        case "bottom":
+                            yPos = (yrange.from + plotOffset.top);
+                            break;
+                        case "middle":
+                            yPos = (yrange.from + plotOffset.top + yrange.to + plotOffset.top) / 2;
+                            break;
                     }
                 }
 
@@ -3070,18 +3121,18 @@ Licensed under the MIT license.
                 ctx.lineWidth = w;
                 ctx.strokeStyle = "rgba(0,0,0,0.1)";
                 plotPoints(series.datapoints, radius, null, w + w / 2, true,
-                           series.xaxis, series.yaxis, symbol);
+                    series.xaxis, series.yaxis, symbol);
 
                 ctx.strokeStyle = "rgba(0,0,0,0.2)";
                 plotPoints(series.datapoints, radius, null, w / 2, true,
-                           series.xaxis, series.yaxis, symbol);
+                    series.xaxis, series.yaxis, symbol);
             }
 
             ctx.lineWidth = lw;
             ctx.strokeStyle = series.points.strokeColor || series.color;
             plotPoints(series.datapoints, radius,
-                       getFillStyle(series.points, series.color), 0, false,
-                       series.xaxis, series.yaxis, symbol);
+                getFillStyle(series.points, series.color), 0, false,
+                series.xaxis, series.yaxis, symbol);
             ctx.restore();
         }
 
@@ -3216,14 +3267,14 @@ Licensed under the MIT license.
             var barLeft;
 
             switch (series.bars.align) {
-            case "left":
-                barLeft = 0;
-                break;
-            case "right":
-                barLeft = -series.bars.barWidth;
-                break;
-            default:
-                barLeft = -series.bars.barWidth / 2;
+                case "left":
+                    barLeft = 0;
+                    break;
+                case "right":
+                    barLeft = -series.bars.barWidth;
+                    break;
+                default:
+                    barLeft = -series.bars.barWidth / 2;
             }
 
             var fillStyleCallback = series.bars.fill ? function(bottom, top) { return getFillStyle(series.bars, series.color, bottom, top); } : null;
@@ -3314,16 +3365,16 @@ Licensed under the MIT license.
                 }
 
                 var colorbox = $("<div></div>").css({
-                    "width": "4px",
-                    "height": 0,
-                    "border": "5px solid " + entry.color,
-                    "overflow": "hidden"
-                }),
+                        "width": "4px",
+                        "height": 0,
+                        "border": "5px solid " + entry.color,
+                        "overflow": "hidden"
+                    }),
 
-                borderbox = $("<div></div>").css({
-                    "border": "1px solid " + options.legend.labelBoxBorderColor,
-                    "padding": "1px"
-                });
+                    borderbox = $("<div></div>").css({
+                        "border": "1px solid " + options.legend.labelBoxBorderColor,
+                        "padding": "1px"
+                    });
 
                 rowBuffer.append(
                     $("<td></td>").addClass("legendColorBox").append(borderbox.append(colorbox)),
@@ -3456,14 +3507,14 @@ Licensed under the MIT license.
                     var barLeft, barRight;
 
                     switch (s.bars.align) {
-                    case "left":
-                        barLeft = 0;
-                        break;
-                    case "right":
-                        barLeft = -s.bars.barWidth;
-                        break;
-                    default:
-                        barLeft = -s.bars.barWidth / 2;
+                        case "left":
+                            barLeft = 0;
+                            break;
+                        case "right":
+                            barLeft = -s.bars.barWidth;
+                            break;
+                        default:
+                            barLeft = -s.bars.barWidth / 2;
                     }
 
                     barRight = barLeft + s.bars.barWidth;
@@ -3479,9 +3530,9 @@ Licensed under the MIT license.
                         // for a bar graph, the cursor must be inside the bar
                         if (series[i].bars.horizontal ?
                             (mx <= Math.max(b, x) && mx >= Math.min(b, x) &&
-                             my >= y + barLeft && my <= y + barRight) :
+                                my >= y + barLeft && my <= y + barRight) :
                             (mx >= x + barLeft && mx <= x + barRight &&
-                             my >= Math.min(b, y) && my <= Math.max(b, y))) {
+                                my >= Math.min(b, y) && my <= Math.max(b, y))) {
                             item = [i, j / ps];
                         }
                     }
@@ -3494,9 +3545,9 @@ Licensed under the MIT license.
                 ps = series[i].datapoints.pointsize;
 
                 return { datapoint: series[i].datapoints.points.slice(j * ps, (j + 1) * ps),
-                         dataIndex: j,
-                         series: series[i],
-                         seriesIndex: i };
+                    dataIndex: j,
+                    series: series[i],
+                    seriesIndex: i };
             }
 
             return null;
@@ -3505,20 +3556,20 @@ Licensed under the MIT license.
         function onMouseMove(e) {
             if (options.grid.hoverable) {
                 triggerClickHoverEvent("plothover", e,
-                                       function(s) { return s.hoverable !== false; });
+                    function(s) { return s.hoverable !== false; });
             }
         }
 
         function onMouseLeave(e) {
             if (options.grid.hoverable) {
                 triggerClickHoverEvent("plothover", e,
-                                       function() { return false; });
+                    function() { return false; });
             }
         }
 
         function onClick(e) {
             triggerClickHoverEvent("plotclick", e,
-                                   function(s) { return s.clickable !== false; });
+                function(s) { return s.clickable !== false; });
         }
 
         /**
@@ -3529,7 +3580,7 @@ Licensed under the MIT license.
             var offset = eventHolder.offset(),
                 canvasX = event.pageX - offset.left - plotOffset.left,
                 canvasY = event.pageY - offset.top - plotOffset.top,
-            pos = canvasToAxisCoords({ left: canvasX, top: canvasY });
+                pos = canvasToAxisCoords({ left: canvasX, top: canvasY });
 
             pos.pageX = event.pageX;
             pos.pageY = event.pageY;
@@ -3694,21 +3745,21 @@ Licensed under the MIT license.
                 barLeft;
 
             switch (series.bars.align) {
-            case "left":
-                barLeft = 0;
-                break;
-            case "right":
-                barLeft = -series.bars.barWidth;
-                break;
-            default:
-                barLeft = -series.bars.barWidth / 2;
+                case "left":
+                    barLeft = 0;
+                    break;
+                case "right":
+                    barLeft = -series.bars.barWidth;
+                    break;
+                default:
+                    barLeft = -series.bars.barWidth / 2;
             }
 
             octx.lineWidth = series.bars.lineWidth;
             octx.strokeStyle = highlightColor;
 
             drawBar(point[0], point[1], point[2] || 0, barLeft, barLeft + series.bars.barWidth,
-                    function() { return fillStyle; }, series.xaxis, series.yaxis, octx, series.bars.horizontal, series.bars.lineWidth);
+                function() { return fillStyle; }, series.xaxis, series.yaxis, octx, series.bars.horizontal, series.bars.lineWidth);
         }
 
         function getColorOrGradient(spec, bottom, top, defaultColor) {
