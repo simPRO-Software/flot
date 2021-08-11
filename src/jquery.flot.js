@@ -1262,7 +1262,6 @@ Licensed under the MIT license.
             }
             if (res.y1 !== undefined) {
                 res.y = res.y1;
-                res.y = res.y1;
             }
 
             return res;
@@ -2406,12 +2405,9 @@ Licensed under the MIT license.
                     var m = markings[i];
 
                     if (m.aboveGrid) {
-                        console.log('above');
                         markingsAboveGrid.push(m);
                     } else if (!m.aboveGraph) {
                         markingsUnderGrid.push(m);
-                        console.log('notAbove');
-                        console.log(m);
                     }
                 }
             }
