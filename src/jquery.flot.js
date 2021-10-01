@@ -2263,7 +2263,7 @@ Licensed under the MIT license.
 
             for (var i = 0; i < series.length; ++i) {
                 executeHooks(hooks.drawSeries, [ctx, series[i]]);
-                drawSeries(series[i]);
+                drawSeries(series[i], i);
             }
 
             executeHooks(hooks.draw, [ctx]);
@@ -2762,7 +2762,7 @@ Licensed under the MIT license.
             });
         }
 
-        function drawSeries(series) {
+        function drawSeries(series, i) {
             if (series.lines.show) {
                 drawSeriesLines(series);
             }
@@ -2770,7 +2770,7 @@ Licensed under the MIT license.
                 drawSeriesBars(series);
             }
             if (series.points.show) {
-                drawSeriesPoints(series);
+                drawSeriesPoints(series, i);
             }
         }
 
@@ -3066,12 +3066,13 @@ Licensed under the MIT license.
             ctx.restore();
         }
 
-        function drawSeriesPoints(series) {
-            function plotPoints(datapoints, radius, fillStyle, offset, shadow, axisx, axisy, symbol) {
+        function drawSeriesPoints(series, i) {
+            function plotPoints(datapoints, radius, fillStyle, offset, shadow, axisx, axisy, symbol, extraData = null, t = 0) {
                 var points = datapoints.points, ps = datapoints.pointsize;
 
                 for (var i = 0; i < points.length; i += ps) {
                     var x = points[i], y = points[i + 1];
+                    var value = x;
                     if (x == null || x < axisx.min || x > axisx.max || y < axisy.min || y > axisy.max) {
                         continue;
                     }
@@ -3081,16 +3082,17 @@ Licensed under the MIT license.
                     y = axisy.p2c(y) + offset;
                     if (symbol === "circle") {
                         ctx.arc(x, y, radius, 0, shadow ? Math.PI : Math.PI * 2, false);
+                        ctx.closePath();
+                        if (fillStyle) {
+                            ctx.fillStyle = fillStyle;
+                            ctx.fill();
+                        }
+                        ctx.stroke();
                     } else {
-                        symbol(ctx, x, y, radius, shadow);
-                    }
-                    ctx.closePath();
-
-                    if (fillStyle) {
-                        ctx.fillStyle = fillStyle;
+                        symbol(ctx, x, y, radius, shadow, extraData, value, t);
+                        ctx.fillStyle = "#FF0000";
                         ctx.fill();
                     }
-                    ctx.stroke();
                 }
             }
 
@@ -3100,7 +3102,8 @@ Licensed under the MIT license.
             var lw = series.points.lineWidth,
                 sw = series.shadowSize,
                 radius = series.points.radius,
-                symbol = series.points.symbol;
+                symbol = series.points.symbol,
+                extraData = series.points.extraData;
 
             // If the user sets the line width to 0, we change it to a very
             // small value. A line width of 0 seems to force the default of 1.
@@ -3117,18 +3120,18 @@ Licensed under the MIT license.
                 ctx.lineWidth = w;
                 ctx.strokeStyle = "rgba(0,0,0,0.1)";
                 plotPoints(series.datapoints, radius, null, w + w / 2, true,
-                    series.xaxis, series.yaxis, symbol);
+                    series.xaxis, series.yaxis, symbol, extraData, i);
 
                 ctx.strokeStyle = "rgba(0,0,0,0.2)";
                 plotPoints(series.datapoints, radius, null, w / 2, true,
-                    series.xaxis, series.yaxis, symbol);
+                    series.xaxis, series.yaxis, symbol, extraData, i);
             }
 
             ctx.lineWidth = lw;
             ctx.strokeStyle = series.points.strokeColor || series.color;
             plotPoints(series.datapoints, radius,
                 getFillStyle(series.points, series.color), 0, false,
-                series.xaxis, series.yaxis, symbol);
+                series.xaxis, series.yaxis, symbol, extraData, i);
             ctx.restore();
         }
 
@@ -3710,7 +3713,7 @@ Licensed under the MIT license.
             if (x < axisx.min || x > axisx.max || y < axisy.min || y > axisy.max) {
                 return;
             }
-
+            var value = x;
             var pointRadius, radius;
 
             if (series.points.show) {
@@ -3729,7 +3732,7 @@ Licensed under the MIT license.
             if (series.points.symbol === "circle") {
                 octx.arc(x, y, radius, 0, 2 * Math.PI, false);
             } else {
-                series.points.symbol(octx, x, y, radius, false);
+                series.points.symbol(octx, x, y, radius, false, series.points.extraData, value);
             }
             octx.closePath();
             octx.stroke();
