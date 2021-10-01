@@ -2263,7 +2263,7 @@ Licensed under the MIT license.
 
             for (var i = 0; i < series.length; ++i) {
                 executeHooks(hooks.drawSeries, [ctx, series[i]]);
-                drawSeries(series[i]);
+                drawSeries(series[i], i);
             }
 
             executeHooks(hooks.draw, [ctx]);
@@ -2762,7 +2762,7 @@ Licensed under the MIT license.
             });
         }
 
-        function drawSeries(series) {
+        function drawSeries(series, i) {
             if (series.lines.show) {
                 drawSeriesLines(series);
             }
@@ -2770,7 +2770,7 @@ Licensed under the MIT license.
                 drawSeriesBars(series);
             }
             if (series.points.show) {
-                drawSeriesPoints(series);
+                drawSeriesPoints(series, i);
             }
         }
 
@@ -3066,8 +3066,8 @@ Licensed under the MIT license.
             ctx.restore();
         }
 
-        function drawSeriesPoints(series) {
-            function plotPoints(datapoints, radius, fillStyle, offset, shadow, axisx, axisy, symbol, extraData = null) {
+        function drawSeriesPoints(series, i) {
+            function plotPoints(datapoints, radius, fillStyle, offset, shadow, axisx, axisy, symbol, extraData = null, t) {
                 var points = datapoints.points, ps = datapoints.pointsize;
 
                 for (var i = 0; i < points.length; i += ps) {
@@ -3089,7 +3089,7 @@ Licensed under the MIT license.
                         }
                         ctx.stroke();
                     } else {
-                        symbol(ctx, x, y, radius, shadow, extraData, value);
+                        symbol(ctx, x, y, radius, shadow, extraData, value, t);
                         ctx.fillStyle = "#FF0000";
                         ctx.fill();
                     }
@@ -3120,18 +3120,18 @@ Licensed under the MIT license.
                 ctx.lineWidth = w;
                 ctx.strokeStyle = "rgba(0,0,0,0.1)";
                 plotPoints(series.datapoints, radius, null, w + w / 2, true,
-                    series.xaxis, series.yaxis, symbol, extraData);
+                    series.xaxis, series.yaxis, symbol, extraData, i);
 
                 ctx.strokeStyle = "rgba(0,0,0,0.2)";
                 plotPoints(series.datapoints, radius, null, w / 2, true,
-                    series.xaxis, series.yaxis, symbol, extraData);
+                    series.xaxis, series.yaxis, symbol, extraData, i);
             }
 
             ctx.lineWidth = lw;
             ctx.strokeStyle = series.points.strokeColor || series.color;
             plotPoints(series.datapoints, radius,
                 getFillStyle(series.points, series.color), 0, false,
-                series.xaxis, series.yaxis, symbol, extraData);
+                series.xaxis, series.yaxis, symbol, extraData, i);
             ctx.restore();
         }
 
