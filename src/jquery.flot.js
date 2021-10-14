@@ -2368,7 +2368,7 @@ Licensed under the MIT license.
             bw = options.grid.borderWidth;
 
             drawMarkings(markingsAboveGraph, markingLayer);
-
+            drawCompliantArea(markings);
 
             ctx.restore();
         }
@@ -2586,6 +2586,65 @@ Licensed under the MIT license.
             for (var i = 0; i < markings.length; i++) {
                 drawMarking(markings[i], markingLayer);
             }
+        }
+
+        function drawCompliantArea(markings) {
+            if (!markings || markings.length === 0) {
+                return;
+            }
+            let compliantAreaColor = null;
+            for (let i = 0; i < markings.length; i++)  {
+                if (markings[i].yaxis && markings[i].yaxis.compliantAreaColor) {
+                    compliantAreaColor = markings[i].yaxis.compliantAreaColor;
+                    break;
+                }
+            }
+            if (!compliantAreaColor) {
+                return;
+            }
+            let startY, endY, xLength, yLength;
+            for (let i = 0; i < markings.length; i++) {
+                let xrange = extractRange(markings[i], "x"),
+                    yrange = extractRange(markings[i], "y");
+                if (xrange.to == null) {
+                    xrange.to = xrange.axis.max;
+                }
+                xrange.to = Math.min(xrange.to, xrange.axis.max);
+                xrange.to = Math.floor(xrange.axis.p2c(xrange.to));
+                if (!yLength) {
+                    xLength = xrange.to;
+                }
+                if (markings[i].yaxis.max && !endY) {
+                    yrange.to = Math.min(yrange.to, yrange.axis.max);
+                    endY = Math.floor(yrange.axis.p2c(yrange.to));
+                }
+                if (markings[i].yaxis.min && !startY) {
+                    yrange.from = Math.max(yrange.from, yrange.axis.min);
+                    startY = Math.floor(yrange.axis.p2c(yrange.from));
+                }
+            }
+            if (!startY && endY) {
+                for (let i = 0; i < markings.length; i++) {
+                    let yrange = extractRange(markings[i], "y");
+                    if (markings[i].yaxis.max) {
+                        yrange.from = Math.min(yrange.from, yrange.axis.min);
+                        startY = Math.floor(yrange.axis.p2c(yrange.from));
+                        break;
+                    }
+                }
+            }
+            if (startY && !endY) {
+                for (let i = 0; i < markings.length; i++) {
+                    let yrange = extractRange(markings[i], "y");
+                    if (markings[i].yaxis.min) {
+                        yrange.from = Math.max(yrange.from, yrange.axis.max);
+                        endY = Math.floor(yrange.axis.p2c(yrange.from));
+                        break;
+                    }
+                }
+            }
+            ctx.fillStyle = compliantAreaColor;
+            ctx.fillRect(0, startY, xLength, endY - startY);
         }
 
         function drawMarking(m, markingLayer) {
