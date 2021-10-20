@@ -2644,6 +2644,7 @@ Licensed under the MIT license.
                 }
             }
             ctx.fillStyle = compliantAreaColor;
+            ctx.globalCompositeOperation = "destination-over";
             ctx.fillRect(0, startY, xLength, endY - startY);
         }
 
